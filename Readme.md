@@ -1,5 +1,11 @@
 # Speech-to-Text (STT) Library
 
+
+## Live Demo
+
+You can view a live demo of the example [here]https://raghavendra-k-j.github.io/stt-js/example/).
+
+
 ## Introduction
 
 The Speech-to-Text (STT) library provides a simple interface for integrating browser-based speech recognition into your web applications. It leverages the Web Speech API to enable real-time speech recognition with support for continuous and interim results.
@@ -145,8 +151,6 @@ Below is an example of how to use the STT library in a web application:
 - Ensure the browser supports the Web Speech API.
 - Handle errors gracefully using the `onError` event.
 
-## Live Demo
 
-You can view a live demo of the example [here]https://raghavendra-k-j.github.io/stt-js/example/).
 
 To try it locally, use the provided `example/index.html` file as a starting point.
