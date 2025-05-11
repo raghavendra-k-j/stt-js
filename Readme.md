@@ -147,6 +147,6 @@ Below is an example of how to use the STT library in a web application:
 
 ## Live Demo
 
-You can view a live demo of the example [here](https://github.com/raghavendra-k-j/stt-js).
+You can view a live demo of the example [here]https://raghavendra-k-j.github.io/stt-js/example/).
 
 To try it locally, use the provided `example/index.html` file as a starting point.
