@@ -19,7 +19,7 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/STTError.ts
+// src/STT.ts
 var STTErrorCode = /* @__PURE__ */ ((STTErrorCode2) => {
   STTErrorCode2["SPEECH_NOT_SUPPORTED"] = "SPEECH_NOT_SUPPORTED";
   STTErrorCode2["GENERAL_ERROR"] = "GENERAL_ERROR";
@@ -33,8 +33,6 @@ var STTError = class extends Error {
     this.name = "STTError";
   }
 };
-
-// src/STT.ts
 var STT = class {
   // ────────────────────────────────────────────
   //  Construction & binding

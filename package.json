@@ -8,14 +8,10 @@
     ".": {
       "import": "./dist/STT.bundle.js",
       "types": "./dist/STT.d.ts"
-    },
-    "./STTError": {
-      "import": "./dist/STTError.js",
-      "types": "./dist/STTError.d.ts"
     }
   },
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --outfile=dist/STT.bundle.js --format=esm --target=es6 --sourcemap && tsc --emitDeclarationOnly"
+    "build": "esbuild src/STT.ts --bundle --outfile=dist/STT.bundle.js --format=esm --target=es6 --sourcemap && tsc --emitDeclarationOnly"
   },
   "keywords": [
     "speech-to-text",
