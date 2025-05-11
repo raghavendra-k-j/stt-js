@@ -1,18 +1,14 @@
 # Speech-to-Text (STT) Library
 
-
 ## Live Demo
 
-You can view a live demo of the example [here]https://raghavendra-k-j.github.io/stt-js/example/).
-
+You can view a live demo of the example [here](https://raghavendra-k-j.github.io/stt-js/example/).
 
 ## Introduction
 
-The Speech-to-Text (STT) library provides a simple interface for integrating browser-based speech recognition into your web applications. It leverages the Web Speech API to enable real-time speech recognition with support for continuous and interim results.
+The Speech-to-Text (STT) library provides a clean interface for integrating browser-based speech recognition into your web applications using the Web Speech API. It supports real-time transcription, interim results, and continuous listening.
 
 ## Installation
-
-To use the STT library, include it in your project by importing the `STT` class from the appropriate file.
 
 ```bash
 npm install @raghavendra_kj/stt-js
@@ -20,137 +16,105 @@ npm install @raghavendra_kj/stt-js
 
 ## Usage
 
-### Importing the Library
+### Import the Library
 
 ```javascript
-import { STT } from "./STT";
+import { STT } from "@raghavendra_kj/stt-js";
 ```
 
-### Creating an Instance
+### Create an Instance
 
 ```javascript
 const stt = new STT();
 ```
 
-### Event Handlers
-
-The library provides the following event handlers for customization:
-
-- `onStart`: Triggered when speech recognition starts.
-- `onEnd`: Triggered when speech recognition ends.
-- `onResult`: Triggered when a final transcript is available.
-- `onPartialResult`: Triggered when interim results are available.
-- `onError`: Triggered when an error occurs.
-
-### Starting and Stopping Recognition
-
-Use the `start` method to begin recognition and the `stop` or `abort` methods to end it.
+### Start Recognition
 
 ```javascript
-stt.start({
-  lang: "en-US",
-  continuous: true,
-  interimResults: true,
-});
-
-stt.stop();
+await stt.start();
 ```
+
+You can also pass options:
+
+```javascript
+await stt.start({
+  lang: "en-IN",
+  continuous: false,
+  interimResults: false
+});
+```
+
+### Stop or Abort Recognition
+
+```javascript
+stt.stop(); // Gracefully ends recognition
+stt.abort(); // Forcibly ends recognition
+```
+
+## API Reference
+
+### `STT.start(options?)`
+
+Starts speech recognition.
+
+**Parameters:**
+
+- `lang` (string): Language code (default: `"en-US"`)
+- `continuous` (boolean): If recognition should continue after pauses (default: `true`)
+- `interimResults` (boolean): Whether to include interim results (default: `true`)
+
+**Returns:** `Promise<void>`
+
+### `STT.stop()`
+
+Stops the recognition session gracefully.
+
+### `STT.abort()`
+
+Forcibly aborts the recognition session.
+
+### `STT.isRecognizing()`
+
+Returns a boolean indicating whether recognition is currently active.
+
+### `STT.dispose()`
+
+Stops recognition and removes all listeners. Use for cleanup.
+
+## Events
+
+Register listeners for events:
+
+```javascript
+stt.addListener("result", (text) => { ... });
+```
+
+**Supported Events:**
+
+- `"start"` — recognition started
+- `"end"` — recognition ended
+- `"result"` — final transcript available
+- `"partialResult"` — interim transcript update
+- `"error"` — generic error occurred
+
+
+Remove listeners:
+
+```javascript
+stt.removeListener("result", handler);
+stt.removeAllListeners();
+```
+
+## Permissions
+
+If supported, the library uses the Permissions API to check for microphone access.
+
+Errors are reported through the `"error"` events.
+
+## Browser Support
+
+Ensure the target browser supports the Web Speech API (e.g., latest versions of Chrome, Edge).
 
 ## Example
 
-Below is an example of how to use the STT library in a web application:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Speech Recognition Demo</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        padding: 2rem;
-      }
-      button {
-        font-size: 1.2rem;
-        padding: 0.5rem 1rem;
-      }
-      textarea {
-        margin-top: 1rem;
-        width: 100%;
-        height: 200px;
-        font-size: 1rem;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Speech Recognition Demo</h1>
-    <button id="startBtn">🎙️ Speak</button>
-    <textarea
-      id="output"
-      readonly
-      placeholder="Speech will appear here..."
-    ></textarea>
-
-    <script type="module">
-      import { STT } from "./STT";
-
-      const stt = new STT();
-      const startBtn = document.getElementById("startBtn");
-      const output = document.getElementById("output");
-
-      let fullText = "";
-
-      stt.onStart = () => {
-        startBtn.textContent = "🛑 Stop";
-      };
-
-      stt.onEnd = () => {
-        startBtn.textContent = "🎙️ Speak";
-      };
-
-      stt.onResult = (finalTranscript) => {
-        fullText = finalTranscript;
-        output.value = fullText;
-      };
-
-      stt.onPartialResult = (interimTranscript) => {
-        output.value = fullText + interimTranscript;
-      };
-
-      stt.onError = (error) => {
-        alert("STT Error: " + error);
-      };
-
-      let recognizing = false;
-
-      startBtn.onclick = () => {
-        if (!recognizing) {
-          try {
-            stt.start({
-              lang: "en-US",
-              continuous: true,
-              interimResults: true,
-            });
-            recognizing = true;
-          } catch (e) {
-            alert("Error: " + e.message);
-          }
-        } else {
-          stt.stop();
-          recognizing = false;
-        }
-      };
-    </script>
-  </body>
-</html>
-```
-
-## Notes
-
-- Ensure the browser supports the Web Speech API.
-- Handle errors gracefully using the `onError` event.
-
-
-
-To try it locally, use the provided `example/index.html` file as a starting point.
+A complete working example is available in `example/index.html`.

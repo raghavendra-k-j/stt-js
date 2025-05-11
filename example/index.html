@@ -2,32 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>STT Appending Demo</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        padding: 2rem;
-      }
-      button {
-        font-size: 1.2rem;
-        padding: 0.5rem 1rem;
-      }
-      textarea {
-        margin-top: 1rem;
-        width: 100%;
-        height: 200px;
-        font-size: 1rem;
-      }
-    </style>
+    <title>STT Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body>
-    <h1>Speech Recognition Demo</h1>
-    <button id="startBtn">🎙️ Speak</button>
-    <textarea
-      id="output"
-      readonly
-      placeholder="Speech will appear here..."
-    ></textarea>
+  <body class="bg-gray-50 text-gray-800">
+    <div class="max-w-xl mx-auto p-6">
+      <h1 class="text-2xl font-bold mb-4">🎙️ Speech Recognition</h1>
+
+      <button
+        id="startBtn"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+      >
+        🎙️ Speak
+      </button>
+
+      <textarea
+        id="output"
+        readonly
+        placeholder="Speech will appear here..."
+        class="w-full mt-4 h-56 p-2 border rounded resize-none"
+      ></textarea>
+    </div>
 
     <script type="module">
       import { STT } from "../dist/STT.bundle.js";
@@ -37,38 +33,39 @@
       const output = document.getElementById("output");
 
       let fullText = "";
-
-      stt.onStart = () => {
-        startBtn.textContent = "🛑 Stop";
-      };
-
-      stt.onEnd = () => {
-        startBtn.textContent = "🎙️ Speak";
-      };
-
-      stt.onResult = (finalTranscript) => {
-        fullText = finalTranscript;
-        output.value = fullText;
-      };
-
-      stt.onPartialResult = (interimTranscript) => {
-        output.value = fullText + interimTranscript;
-      };
-
-      stt.onError = (error) => {
-        alert("STT Error: " + error);
-      };
-
       let recognizing = false;
 
-      startBtn.onclick = () => {
+      stt.addListener("start", () => {
+        startBtn.textContent = "🛑 Stop";
+      });
+
+      stt.addListener("end", () => {
+        startBtn.textContent = "🎙️ Speak";
+      });
+
+      stt.addListener("result", (finalTranscript) => {
+        fullText = finalTranscript;
+        output.value = fullText;
+      });
+
+      stt.addListener("partialResult", (interimTranscript) => {
+        if (fullText.length > 0) {
+          output.value = fullText + " " + interimTranscript;
+        } else {
+          output.value = interimTranscript;
+        }
+      });
+
+      stt.addListener("error", (error) => {
+        alert("STT Error: " + error.message);
+        recognizing = false;
+        startBtn.textContent = "🎙️ Speak";
+      });
+
+      startBtn.onclick = async () => {
         if (!recognizing) {
           try {
-            stt.start({
-              lang: "en-US",
-              continuous: true,
-              interimResults: true,
-            });
+            await stt.start(); // uses default options
             recognizing = true;
           } catch (e) {
             alert("Error: " + e.message);

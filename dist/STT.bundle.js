@@ -1,76 +1,133 @@
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
 // src/STTError.ts
 var STTError = class extends Error {
   constructor(code, message) {
     super(message);
     this.code = code;
-    this.name = "SpeechError";
+    this.name = "STTError";
   }
 };
 
 // src/STT.ts
 var STT = class {
   constructor() {
-    this.recognition = void 0;
     this.recognizing = false;
     this.finalTranscript = "";
-    if (typeof window === "undefined") {
-      return;
-    }
+    this.listeners = /* @__PURE__ */ new Map();
+    if (typeof window === "undefined") return;
     const Impl = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Impl) {
-      return;
-    }
+    if (!Impl) return;
     this.recognition = new Impl();
-    if (!this.recognition) {
-      return;
-    }
     this.bindEvents();
   }
-  bindEvents() {
-    if (!this.recognition) {
-      return;
+  addListener(event, handler) {
+    var _a;
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, /* @__PURE__ */ new Set());
     }
+    (_a = this.listeners.get(event)) == null ? void 0 : _a.add(handler);
+  }
+  removeListener(event, handler) {
+    var _a;
+    (_a = this.listeners.get(event)) == null ? void 0 : _a.delete(handler);
+  }
+  removeAllListeners(event) {
+    if (event) {
+      this.listeners.delete(event);
+    } else {
+      this.listeners.clear();
+    }
+  }
+  emit(event, data) {
+    var _a;
+    (_a = this.listeners.get(event)) == null ? void 0 : _a.forEach((handler) => handler(data));
+  }
+  bindEvents() {
+    if (!this.recognition) return;
     this.recognition.onstart = () => {
-      var _a;
       this.recognizing = true;
-      (_a = this.onStart) == null ? void 0 : _a.call(this);
+      this.emit("start");
     };
     this.recognition.onend = () => {
-      var _a;
       this.recognizing = false;
-      (_a = this.onEnd) == null ? void 0 : _a.call(this);
+      this.emit("end");
     };
     this.recognition.onerror = (event) => {
-      var _a;
-      (_a = this.onError) == null ? void 0 : _a.call(this, event.error);
+      const code = event.error === "not-allowed" || event.error === "permission-denied" ? "PERMISSION_DENIED" /* PERMISSION_DENIED */ : "GENERAL_ERROR" /* GENERAL_ERROR */;
+      this.emit("error", new STTError(code, event.error));
     };
     this.recognition.onresult = (event) => {
-      var _a;
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           this.finalTranscript += transcript;
-          (_a = this.onResult) == null ? void 0 : _a.call(this, this.finalTranscript.trim());
+          this.emit("result", this.finalTranscript.trim());
         } else {
           interim += transcript;
         }
       }
-      if (interim && this.onPartialResult) {
-        this.onPartialResult(interim.trim());
+      if (interim) {
+        this.emit("partialResult", interim.trim());
       }
     };
   }
-  start(options) {
-    var _a;
-    if (!this.recognition) {
-      throw new STTError("SPEECH_NOT_SUPPORTED" /* SPEECH_NOT_SUPPORTED */, "Speech recognition not supported");
-    }
-    this.recognition.lang = options.lang;
-    this.recognition.continuous = options.continuous;
-    this.recognition.interimResults = options.interimResults;
-    this.finalTranscript = "";
-    (_a = this.recognition) == null ? void 0 : _a.start();
+  start() {
+    return __async(this, arguments, function* (options = {}) {
+      if (!this.recognition) {
+        throw new STTError(
+          "SPEECH_NOT_SUPPORTED" /* SPEECH_NOT_SUPPORTED */,
+          "Speech recognition is not supported in this browser."
+        );
+      }
+      try {
+        if (navigator.permissions) {
+          const status = yield navigator.permissions.query({
+            name: "microphone"
+          });
+          if (status.state === "denied") {
+            throw new STTError(
+              "PERMISSION_DENIED" /* PERMISSION_DENIED */,
+              "Microphone permission was denied."
+            );
+          }
+        }
+        const {
+          lang = "en-US",
+          continuous = true,
+          interimResults = true
+        } = options;
+        this.recognition.lang = lang;
+        this.recognition.continuous = continuous;
+        this.recognition.interimResults = interimResults;
+        this.finalTranscript = "";
+        this.recognition.start();
+      } catch (err) {
+        const error = err instanceof STTError ? err : new STTError("GENERAL_ERROR" /* GENERAL_ERROR */, err.message);
+        this.emit("error", error);
+        throw error;
+      }
+    });
   }
   stop() {
     var _a;
@@ -84,9 +141,9 @@ var STT = class {
     return this.recognizing;
   }
   dispose() {
-    if (!this.recognition) {
-      return;
-    }
+    this.stop();
+    this.removeAllListeners();
+    this.recognition = void 0;
   }
 };
 export {
