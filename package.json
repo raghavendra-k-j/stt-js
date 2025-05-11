@@ -1,6 +1,6 @@
 {
   "name": "@raghavendra_kj/stt-js",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A wrapper around the Web Speech API for speech-to-text functionality.",
   "main": "dist/STT.bundle.js",
   "types": "dist/STT.d.ts",
