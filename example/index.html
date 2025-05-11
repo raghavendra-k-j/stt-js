@@ -26,7 +26,7 @@
     </div>
 
     <script type="module">
-      import { STT } from "../dist/STT.bundle.js";
+      import { STT } from "../dist/STT.bundle.js"; // make sure this path is correct
 
       const stt = new STT();
       const startBtn = document.getElementById("startBtn");
@@ -35,37 +35,38 @@
       let fullText = "";
       let recognizing = false;
 
-      stt.addListener("start", () => {
+      // Register typed event listeners
+      stt.onStart(() => {
         startBtn.textContent = "🛑 Stop";
       });
 
-      stt.addListener("end", () => {
+      stt.onEnd(() => {
         startBtn.textContent = "🎙️ Speak";
+        recognizing = false;
       });
 
-      stt.addListener("result", (finalTranscript) => {
+      stt.onResult((finalTranscript) => {
         fullText = finalTranscript;
         output.value = fullText;
       });
 
-      stt.addListener("partialResult", (interimTranscript) => {
-        if (fullText.length > 0) {
-          output.value = fullText + " " + interimTranscript;
-        } else {
-          output.value = interimTranscript;
-        }
+      stt.onPartialResult((interimTranscript) => {
+        output.value = fullText.length > 0
+          ? fullText + " " + interimTranscript
+          : interimTranscript;
       });
 
-      stt.addListener("error", (error) => {
+      stt.onError((error) => {
         alert("STT Error: " + error.message);
         recognizing = false;
         startBtn.textContent = "🎙️ Speak";
       });
 
+      // Toggle start/stop
       startBtn.onclick = async () => {
         if (!recognizing) {
           try {
-            await stt.start(); // uses default options
+            await stt.start(); // default options
             recognizing = true;
           } catch (e) {
             alert("Error: " + e.message);

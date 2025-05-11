@@ -30,68 +30,140 @@ var STTError = class extends Error {
 
 // src/STT.ts
 var STT = class {
+  // ────────────────────────────────────────────
+  //  Construction & binding
+  // ────────────────────────────────────────────
   constructor() {
     this.recognizing = false;
     this.finalTranscript = "";
-    this.listeners = /* @__PURE__ */ new Map();
+    // One Set per event ➜ maximum type safety
+    this.startListeners = /* @__PURE__ */ new Set();
+    this.endListeners = /* @__PURE__ */ new Set();
+    this.resultListeners = /* @__PURE__ */ new Set();
+    this.partialResultListeners = /* @__PURE__ */ new Set();
+    this.errorListeners = /* @__PURE__ */ new Set();
     if (typeof window === "undefined") return;
     const Impl = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Impl) return;
     this.recognition = new Impl();
     this.bindEvents();
   }
-  addListener(event, handler) {
-    var _a;
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, /* @__PURE__ */ new Set());
-    }
-    (_a = this.listeners.get(event)) == null ? void 0 : _a.add(handler);
+  // ────────────────────────────────────────────
+  //  Public listener helpers
+  // ────────────────────────────────────────────
+  /* ADDERS */
+  onStart(handler) {
+    this.startListeners.add(handler);
   }
-  removeListener(event, handler) {
-    var _a;
-    (_a = this.listeners.get(event)) == null ? void 0 : _a.delete(handler);
+  onEnd(handler) {
+    this.endListeners.add(handler);
   }
+  onResult(handler) {
+    this.resultListeners.add(handler);
+  }
+  onPartialResult(handler) {
+    this.partialResultListeners.add(handler);
+  }
+  onError(handler) {
+    this.errorListeners.add(handler);
+  }
+  /* REMOVERS */
+  offStart(handler) {
+    this.startListeners.delete(handler);
+  }
+  offEnd(handler) {
+    this.endListeners.delete(handler);
+  }
+  offResult(handler) {
+    this.resultListeners.delete(handler);
+  }
+  offPartialResult(handler) {
+    this.partialResultListeners.delete(handler);
+  }
+  offError(handler) {
+    this.errorListeners.delete(handler);
+  }
+  /** Clear listeners for a specific event or *all* events */
   removeAllListeners(event) {
-    if (event) {
-      this.listeners.delete(event);
-    } else {
-      this.listeners.clear();
+    switch (event) {
+      case "start":
+        this.startListeners.clear();
+        break;
+      case "end":
+        this.endListeners.clear();
+        break;
+      case "result":
+        this.resultListeners.clear();
+        break;
+      case "partialResult":
+        this.partialResultListeners.clear();
+        break;
+      case "error":
+        this.errorListeners.clear();
+        break;
+      default:
+        this.startListeners.clear();
+        this.endListeners.clear();
+        this.resultListeners.clear();
+        this.partialResultListeners.clear();
+        this.errorListeners.clear();
     }
   }
-  emit(event, data) {
-    var _a;
-    (_a = this.listeners.get(event)) == null ? void 0 : _a.forEach((handler) => handler(data));
-  }
+  // ────────────────────────────────────────────
+  //  SpeechRecognition wiring
+  // ────────────────────────────────────────────
   bindEvents() {
-    if (!this.recognition) return;
-    this.recognition.onstart = () => {
+    const r = this.recognition;
+    r.onstart = () => {
       this.recognizing = true;
-      this.emit("start");
+      this.emitStart();
     };
-    this.recognition.onend = () => {
+    r.onend = () => {
       this.recognizing = false;
-      this.emit("end");
+      this.emitEnd();
     };
-    this.recognition.onerror = (event) => {
+    r.onerror = (event) => {
       const code = event.error === "not-allowed" || event.error === "permission-denied" ? "PERMISSION_DENIED" /* PERMISSION_DENIED */ : "GENERAL_ERROR" /* GENERAL_ERROR */;
-      this.emit("error", new STTError(code, event.error));
+      this.emitError(new STTError(code, event.error));
     };
-    this.recognition.onresult = (event) => {
+    r.onresult = (event) => {
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           this.finalTranscript += transcript;
-          this.emit("result", this.finalTranscript.trim());
+          this.emitResult(this.finalTranscript.trim());
         } else {
           interim += transcript;
         }
       }
       if (interim) {
-        this.emit("partialResult", interim.trim());
+        this.emitPartialResult(interim.trim());
       }
     };
   }
+  // ────────────────────────────────────────────
+  //  Emit helpers (private)
+  // ────────────────────────────────────────────
+  emitStart() {
+    this.startListeners.forEach((fn) => fn());
+  }
+  emitEnd() {
+    this.endListeners.forEach((fn) => fn());
+  }
+  emitResult(text) {
+    this.resultListeners.forEach((fn) => fn(text));
+  }
+  emitPartialResult(text) {
+    this.partialResultListeners.forEach((fn) => fn(text));
+  }
+  emitError(err) {
+    this.errorListeners.forEach((fn) => fn(err));
+  }
+  // ────────────────────────────────────────────
+  //  Public API
+  // ────────────────────────────────────────────
+  /** Begin recognition (prompts for mic permission if needed) */
   start() {
     return __async(this, arguments, function* (options = {}) {
       if (!this.recognition) {
@@ -100,46 +172,41 @@ var STT = class {
           "Speech recognition is not supported in this browser."
         );
       }
-      try {
-        if (navigator.permissions) {
-          const status = yield navigator.permissions.query({
-            name: "microphone"
-          });
-          if (status.state === "denied") {
-            throw new STTError(
-              "PERMISSION_DENIED" /* PERMISSION_DENIED */,
-              "Microphone permission was denied."
-            );
-          }
+      if (navigator.permissions) {
+        const status = yield navigator.permissions.query({ name: "microphone" });
+        if (status.state === "denied") {
+          throw new STTError("PERMISSION_DENIED" /* PERMISSION_DENIED */, "Microphone permission was denied.");
         }
-        const {
-          lang = "en-US",
-          continuous = true,
-          interimResults = true
-        } = options;
-        this.recognition.lang = lang;
-        this.recognition.continuous = continuous;
-        this.recognition.interimResults = interimResults;
-        this.finalTranscript = "";
+      }
+      const { lang = "en-US", continuous = true, interimResults = true } = options;
+      this.recognition.lang = lang;
+      this.recognition.continuous = continuous;
+      this.recognition.interimResults = interimResults;
+      this.finalTranscript = "";
+      try {
         this.recognition.start();
       } catch (err) {
         const error = err instanceof STTError ? err : new STTError("GENERAL_ERROR" /* GENERAL_ERROR */, err.message);
-        this.emit("error", error);
+        this.emitError(error);
         throw error;
       }
     });
   }
+  /** Gracefully stop after the current utterance */
   stop() {
     var _a;
     (_a = this.recognition) == null ? void 0 : _a.stop();
   }
+  /** Immediately abort recognition */
   abort() {
     var _a;
     (_a = this.recognition) == null ? void 0 : _a.abort();
   }
+  /** `true` while SpeechRecognition is active */
   isRecognizing() {
     return this.recognizing;
   }
+  /** Stop recognition and detach all listeners */
   dispose() {
     this.stop();
     this.removeAllListeners();

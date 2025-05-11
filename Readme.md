@@ -51,6 +51,29 @@ stt.stop(); // Gracefully ends recognition
 stt.abort(); // Forcibly ends recognition
 ```
 
+### Add Event Listeners
+
+```javascript
+stt.onResult((text) => {
+  console.log("Final result:", text);
+});
+
+stt.onPartialResult((text) => {
+  console.log("Interim result:", text);
+});
+
+stt.onError((error) => {
+  console.error("Error occurred:", error);
+});
+```
+
+### Remove Event Listeners
+
+```javascript
+stt.offResult(handler); // Remove a specific listener
+stt.removeAllListeners(); // Remove all listeners
+```
+
 ## API Reference
 
 ### `STT.start(options?)`
@@ -81,29 +104,24 @@ Returns a boolean indicating whether recognition is currently active.
 
 Stops recognition and removes all listeners. Use for cleanup.
 
-## Events
+### Event Listeners
 
-Register listeners for events:
+#### Add Listeners
 
-```javascript
-stt.addListener("result", (text) => { ... });
-```
+- `stt.onStart(handler: () => void)`: Triggered when recognition starts.
+- `stt.onEnd(handler: () => void)`: Triggered when recognition ends.
+- `stt.onResult(handler: (text: string) => void)`: Triggered when a final transcript is available.
+- `stt.onPartialResult(handler: (text: string) => void)`: Triggered for interim transcript updates.
+- `stt.onError(handler: (error: STTError) => void)`: Triggered when an error occurs.
 
-**Supported Events:**
+#### Remove Listeners
 
-- `"start"` — recognition started
-- `"end"` — recognition ended
-- `"result"` — final transcript available
-- `"partialResult"` — interim transcript update
-- `"error"` — generic error occurred
-
-
-Remove listeners:
-
-```javascript
-stt.removeListener("result", handler);
-stt.removeAllListeners();
-```
+- `stt.offStart(handler: () => void)`: Removes a specific "start" listener.
+- `stt.offEnd(handler: () => void)`: Removes a specific "end" listener.
+- `stt.offResult(handler: (text: string) => void)`: Removes a specific "result" listener.
+- `stt.offPartialResult(handler: (text: string) => void)`: Removes a specific "partialResult" listener.
+- `stt.offError(handler: (error: STTError) => void)`: Removes a specific "error" listener.
+- `stt.removeAllListeners(event?)`: Removes all listeners for a specific event or all events.
 
 ## Permissions
 
