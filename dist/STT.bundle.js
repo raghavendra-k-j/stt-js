@@ -20,6 +20,12 @@ var __async = (__this, __arguments, generator) => {
 };
 
 // src/STTError.ts
+var STTErrorCode = /* @__PURE__ */ ((STTErrorCode2) => {
+  STTErrorCode2["SPEECH_NOT_SUPPORTED"] = "SPEECH_NOT_SUPPORTED";
+  STTErrorCode2["GENERAL_ERROR"] = "GENERAL_ERROR";
+  STTErrorCode2["PERMISSION_DENIED"] = "PERMISSION_DENIED";
+  return STTErrorCode2;
+})(STTErrorCode || {});
 var STTError = class extends Error {
   constructor(code, message) {
     super(message);
@@ -214,6 +220,8 @@ var STT = class {
   }
 };
 export {
-  STT
+  STT,
+  STTError,
+  STTErrorCode
 };
 //# sourceMappingURL=STT.bundle.js.map
