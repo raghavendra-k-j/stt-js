@@ -1,126 +1,152 @@
-# `@raghavendra_kj/stt-js`
+# Speech-to-Text (STT) Library
 
-A simple wrapper around the Web Speech API for speech-to-text functionality.
+## Introduction
 
----
+The Speech-to-Text (STT) library provides a simple interface for integrating browser-based speech recognition into your web applications. It leverages the Web Speech API to enable real-time speech recognition with support for continuous and interim results.
 
 ## Installation
 
-You can install the package via npm:
+To use the STT library, include it in your project by importing the `STT` class from the appropriate file.
 
 ```bash
 npm install @raghavendra_kj/stt-js
 ```
 
----
-
 ## Usage
 
-### Import the package
-
-You can import the package in your JavaScript/TypeScript project like this:
+### Importing the Library
 
 ```javascript
-import { STT } from "@raghavendra_kj/stt-js";
+import { STT } from "./STT";
 ```
 
-### Example usage
+### Creating an Instance
+
+```javascript
+const stt = new STT();
+```
+
+### Event Handlers
+
+The library provides the following event handlers for customization:
+
+- `onStart`: Triggered when speech recognition starts.
+- `onEnd`: Triggered when speech recognition ends.
+- `onResult`: Triggered when a final transcript is available.
+- `onPartialResult`: Triggered when interim results are available.
+- `onError`: Triggered when an error occurs.
+
+### Starting and Stopping Recognition
+
+Use the `start` method to begin recognition and the `stop` or `abort` methods to end it.
+
+```javascript
+stt.start({
+  lang: "en-US",
+  continuous: true,
+  interimResults: true,
+});
+
+stt.stop();
+```
+
+## Example
+
+Below is an example of how to use the STT library in a web application:
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Speech Recognition Demo</title>
-</head>
-<body>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2rem;
+      }
+      button {
+        font-size: 1.2rem;
+        padding: 0.5rem 1rem;
+      }
+      textarea {
+        margin-top: 1rem;
+        width: 100%;
+        height: 200px;
+        font-size: 1rem;
+      }
+    </style>
+  </head>
+  <body>
     <h1>Speech Recognition Demo</h1>
     <button id="startBtn">🎙️ Speak</button>
-    <br><br>
-    <textarea id="output" placeholder="Speech will appear here..." readonly rows="10" cols="50"></textarea>
+    <textarea
+      id="output"
+      readonly
+      placeholder="Speech will appear here..."
+    ></textarea>
 
     <script type="module">
-        import { STT } from "@raghavendra_kj/stt-js";
+      import { STT } from "./STT";
 
-        const recognizer = new STT();
+      const stt = new STT();
+      const startBtn = document.getElementById("startBtn");
+      const output = document.getElementById("output");
 
-        const startBtn = document.getElementById('startBtn');
-        const output = document.getElementById('output');
+      let fullText = "";
 
-        startBtn.onclick = () => {
-            recognizer.toggle();
-        };
+      stt.onStart = () => {
+        startBtn.textContent = "🛑 Stop";
+      };
 
-        recognizer.onStart = () => {
-            startBtn.textContent = '🛑 Stop';
-        };
+      stt.onEnd = () => {
+        startBtn.textContent = "🎙️ Speak";
+      };
 
-        recognizer.onEnd = () => {
-            startBtn.textContent = '🎙️ Speak';
-        };
+      stt.onResult = (finalTranscript) => {
+        fullText = finalTranscript;
+        output.value = fullText;
+      };
 
-        recognizer.onPartialResult = (interimTranscript) => {
-            output.value = recognizer.finalTranscript + interimTranscript;
-        };
+      stt.onPartialResult = (interimTranscript) => {
+        output.value = fullText + interimTranscript;
+      };
 
-        recognizer.onResult = (finalTranscript) => {
-            output.value = finalTranscript;
-        };
+      stt.onError = (error) => {
+        alert("STT Error: " + error);
+      };
 
-        recognizer.onError = (error) => {
-            alert('Error occurred: ' + error);
-        };
+      let recognizing = false;
+
+      startBtn.onclick = () => {
+        if (!recognizing) {
+          try {
+            stt.start({
+              lang: "en-US",
+              continuous: true,
+              interimResults: true,
+            });
+            recognizing = true;
+          } catch (e) {
+            alert("Error: " + e.message);
+          }
+        } else {
+          stt.stop();
+          recognizing = false;
+        }
+      };
     </script>
-</body>
+  </body>
 </html>
 ```
 
-### Class `STT`
+## Notes
 
-The `STT` class is the main component of this library.
+- Ensure the browser supports the Web Speech API.
+- Handle errors gracefully using the `onError` event.
 
-#### Methods
+## Live Demo
 
-* **`start(options: STTStartOptions)`**: Starts the speech recognition with options.
+You can view a live demo of the example [here](https://github.com/raghavendra-k-j/stt-js).
 
-    * `options`: An object that contains:
-
-        * `lang`: The language of recognition (e.g., `'en-US'`).
-        * `continuous`: Whether to continue listening after the speech ends (default: `true`).
-        * `interimResults`: Whether to show partial results (default: `true`).
-
-* **`stop()`**: Stops the recognition.
-
-* **`abort()`**: Aborts the recognition.
-
-* **`isRecognizing()`**: Returns a boolean indicating whether recognition is ongoing.
-
-* **`dispose()`**: Clean up resources when done.
-
----
-
-## API Events
-
-* **`onStart`**: Triggered when the recognition starts.
-* **`onEnd`**: Triggered when the recognition ends.
-* **`onPartialResult`**: Triggered with partial (interim) results during recognition.
-* **`onResult`**: Triggered with the final recognized result.
-* **`onError`**: Triggered if an error occurs during recognition.
-
----
-
-## Example Options
-
-### `STTStartOptions`
-
-```typescript
-export interface STTStartOptions {
-    lang: string;
-    continuous: boolean;
-    interimResults: boolean;
-}
-```
-
-* `lang`: Language code for speech recognition (e.g., `en-US`).
-* `continuous`: If `true`, the recognition will continue even after speech pauses.
-* `interimResults`: If `true`, partial results will be returned during the speech.
+To try it locally, use the provided `example/index.html` file as a starting point.
