@@ -1,0 +1,35 @@
+{
+  "name": "@raghavendra_kj/stt-js",
+  "version": "1.0.0",
+  "description": "A wrapper around the Web Speech API for speech-to-text functionality.",
+  "main": "dist/STT.bundle.js",
+  "types": "dist/STT.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/STT.bundle.js",
+      "types": "./dist/STT.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/STT.ts --bundle --outfile=dist/STT.bundle.js --format=esm --target=es6 --sourcemap && tsc --emitDeclarationOnly"
+  },
+  "keywords": [
+    "speech-to-text",
+    "stt",
+    "speech-recognition",
+    "voice-recognition",
+    "web-speech",
+    "javascript",
+    "web-api",
+    "text-to-speech"
+  ],
+  "author": "Raghavendra K J",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "esbuild": "^0.25.4",
+    "typescript": "^5.4.0"
+  }
+}

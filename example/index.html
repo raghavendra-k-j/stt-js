@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>STT Appending Demo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2rem;
+      }
+      button {
+        font-size: 1.2rem;
+        padding: 0.5rem 1rem;
+      }
+      textarea {
+        margin-top: 1rem;
+        width: 100%;
+        height: 200px;
+        font-size: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Speech Recognition Demo</h1>
+    <button id="startBtn">🎙️ Speak</button>
+    <textarea
+      id="output"
+      readonly
+      placeholder="Speech will appear here..."
+    ></textarea>
+
+    <script type="module">
+      import { STT } from "../dist/STT.bundle.js";
+
+      const stt = new STT();
+      const startBtn = document.getElementById("startBtn");
+      const output = document.getElementById("output");
+
+      let fullText = "";
+
+      stt.onStart = () => {
+        startBtn.textContent = "🛑 Stop";
+      };
+
+      stt.onEnd = () => {
+        startBtn.textContent = "🎙️ Speak";
+      };
+
+      stt.onResult = (finalTranscript) => {
+        fullText = finalTranscript;
+        output.value = fullText;
+      };
+
+      stt.onPartialResult = (interimTranscript) => {
+        output.value = fullText + interimTranscript;
+      };
+
+      stt.onError = (error) => {
+        alert("STT Error: " + error);
+      };
+
+      let recognizing = false;
+
+      startBtn.onclick = () => {
+        if (!recognizing) {
+          try {
+            stt.start({
+              lang: "en-US",
+              continuous: true,
+              interimResults: true,
+            });
+            recognizing = true;
+          } catch (e) {
+            alert("Error: " + e.message);
+          }
+        } else {
+          stt.stop();
+          recognizing = false;
+        }
+      };
+    </script>
+  </body>
+</html>
