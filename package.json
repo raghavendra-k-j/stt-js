@@ -8,6 +8,10 @@
     ".": {
       "import": "./dist/STT.bundle.js",
       "types": "./dist/STT.d.ts"
+    },
+    "./STTError": {
+      "import": "./dist/STTError.js",
+      "types": "./dist/STTError.d.ts"
     }
   },
   "scripts": {
